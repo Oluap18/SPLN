@@ -1,9 +1,17 @@
 #!/usr/bin/perl
 
+use Graph::Easy;
 use strict;
 use warnings;
 use utf8::all;
 
+my $graph = Graph::Easy->new();
+my $i = 25;
+my %sortedHash;
+my %sortedHashP;
+my %verify;
+my $newTuple;
+my $union;
 my $pessoa;                                                                               #guarda qualquer occorência de nome proprio
 my $fPers;                                                                                #primeiro nome proprio a aparecer
 my $sPers;
@@ -86,14 +94,6 @@ while(<>){
   s/_//g;
 }
 
-my %sortedHash;
-my %sortedHashP;
-my %verify;
-my $newTuple;
-
-my $i = 20;
-my $union;
-
 #print "As relações de parentesco são: \n";
 
 #for (sort{$sortedHashP{$b} <=> $sortedHashP{$a}} keys %sortedHashP){
@@ -112,12 +112,21 @@ my $union;
 for (sort{$sortedHash{$b} <=> $sortedHash{$a}} keys %sortedHash){
     if(/($np)-($np)/g) {
        $union = "$1-$3";
-	     print "$1 -> $3 -> $sortedHash{$union}\n";
+       if ($1 !~ /$3/ && $3 !~ /$1/) {
+          $graph->add_edge ($1, $3);
+	        #print "$1 -> $3 -> $sortedHash{$union}\n";
+       }
     }
     $i--;
     if ($i eq 0) {last;}
 }
 
+my $DOT;
+my $graphviz = $graph->as_graphviz();
+open $DOT, '|dot -Grankdir=LR -Tpng -o graph.png' or die ("Cannot open pipe to dot: $!");
+print $DOT $graphviz;
+close $DOT;
+print $graph->as_html_file( );
 
 #verifica se o tuplo de Nomes proprios que se relacionam já apareceram anteriormente -- caso em que existe relação
 sub verifica_relacao {
@@ -153,5 +162,3 @@ sub verifica {
     }
   }
 }
-
-#print $graph->as_html_file( );
