@@ -5,48 +5,41 @@ use strict;
 use warnings;
 use utf8::all;
 
-my $graph = Graph::Easy->new();
-my $i=30;
-my %sortedHash;
-my %sortedHashP;
-my %verify;
-my $newTuple;
+my $graph = Graph::Easy->new();																
+my $i=30;																					#Número de relações
+my %sortedHash;																				#Armazena as relações antes de ser representadas no grafo
 my $union;
-my $pessoa;                                                                               #guarda qualquer occorência de nome proprio
-my $fPers;                                                                                #primeiro nome proprio a aparecer
-my $sPers;
-my $tudo;
-my $tPers;
-my $temp;
-my $countAux;
-my $count;
-my %counter;
-my $iterator;
+my $pessoa;                                                                               	#guarda qualquer occorência de nome proprio entre o primeiro e último nome próprio da regex
+my $fPers;                                                                                	#primeiro nome proprio da regex
+my $uPers;																				  	#último nome proprio da regex
+my $tudo;																					#Texto entre 2 nomes próprios
 
 my $PM = qr{[A-ZÁÀÃÉÚÍÓÇ][a-záàãéúíóç]+};                                                   #palavra maiúscula
 my $de = qr{d[aoe]s?};                                                                      #conector - ex: "de,da,do"
 my $s = qr{[\n ]}; 
-my $Pre = qr{Sr\. |Sra\. |Dr\. |Dra\. |Eng\. |Miss\. |Mr\. };                                                                         #space or new line
-my $np = qr{$Pre? $PM ($s $PM|$s $de $s $PM)*}x;                                                  #nome proprio completo
-my $pal = qr{[\wáàãéúíóç]+};                                                                          #palavra [a-zA-Z_0-9]+
-my $all = qr{.*};
-my $allP = qr{.*?};
+my $Pre = qr{Sr\. |Sra\. |Dr\. |Dra\. |Eng\. |Miss\. |Mr\. };                 				#Prefixos associados a um nome próprio                                                        #space or new line
+my $np = qr{$Pre? $PM ($s $PM|$s $de $s $PM)*}x;                                            #nome proprio completo
+my $pal = qr{[\wáàãéúíóç]+};                                                                #palavra
+my $all = qr{.*};																			#Maior match de qualquer coisa
+my $allP = qr{.*?};																			#Menos match de qualquer coisa
 
 while(<>){
-  	s/(^|[\n]|[?!.;:]|['"«]|[-—]|^--)( ?)($PM)/$1$2_$3/g;
-  	s/($Pre)(_)($np)/_$1_$3/g;																#Tratar dos casos que existem prefixos
-  	s/(\b$np)/{$1}/g;
-  	s/(_)($Pre)(_)($np)/{$2$4}/g;
+	#Tratamento dos nomes próprios válidos
+  	s/(^|[\n]|[?!.;:]|['"«]|[-—]|^--)( ?)($PM)/$1$2_$3/g;									#Tratar dos casos que são considerados nomes próprios inválidos
+  	s/($Pre)(_)($np)/_$1_$3/g;																#Tratar dos casos que existem nomes próprios com prefixos
+  	s/(\b$np)/{$1}/g;																		#Colocar os nomes próprios válidos entre {}
+  	s/(_)($Pre)(_)($np)/{$2$4}/g;															#Colocar os nomes próprios com prefixos entre {}
 
+  	#Encontrar relações entre os nomes próprios
   	while(/{($np)}($all){($np)}/g){
 	    my %pessoas;
-	    $fPers = $1;   
-	    $sPers = $4;          
-	    $tudo = $3;                                                                             #guarda todo o conteudo entre os nomes próprios
-	    $pessoas{$fPers}++;
+	    $fPers = $1;																		#Guardar o primeiro nome próprio da regex
+	    $uPers = $4;          																#Guardar o último nome próprio da regex
+	    $tudo = $3;                                                                         #guarda todo o conteudo entre o primeiro e último nome próprio
+	    $pessoas{$fPers}++;																	#guarda todas as ocorrências de nomes próprios											
 
-	    if($tudo =~ /{($np)}/){
-	      	while($tudo =~ /($allP) \{($np)\}($all)/){
+	    if($tudo =~ /{($np)}/){																#Verifica se existe um nome próprio entre o primeiro e último nome próprio
+	      	while($tudo =~ /($allP) \{($np)\}($all)/){										#Trata todos os nomes próprios entre o primeiro e último nome próprio
 		        $pessoa = $2;
 		        if(!exists $pessoas{$pessoa}){
 			        foreach my $key (keys %pessoas){
@@ -56,14 +49,14 @@ while(<>){
 			    }                                                   #guardar os nomes próprios
 			    $tudo = $4;                                         #iterar o ciclo
 		    }
-		    if(!exists $pessoas{$sPers}){
+		    if(!exists $pessoas{$uPers}){
 			    foreach my $key (keys %pessoas){
-			       	verifica($key, $sPers);
+			       	verifica($key, $uPers);
 			    }
 		    }
 		}
 		else{
-		  	verifica($fPers, $sPers);
+		  	verifica($fPers, $uPers);
 	    }
 	}
 	s/{($np)}/$1/g;
