@@ -32,21 +32,23 @@ my $rSup = qr{pai|av[óô]|ti[oa]|bisav[óô]|amig[oa]|cunhad[oa]|sogr[oa]};    
 my $rSupF = qr{mãe|nora|esposa|madrasta};                                                   #relação "superior" -> feminino
 my $rInf = qr{filh[oa]|sobrinh[oa]|net[oa]|irmão?|prim[oa]|cunhad[oa]|bastardo};            #relação "inferior"
 my $par = qr{$rSup|$rSupM|$rSupF|$rInf};                                                    #relação de parentesco
-my $pal = qr{\w+};                                                                          #palavra [a-zA-Z_0-9]+
-my $all = qr{(([^\n]$pal)|[.,;-?!])(\W$pal?)*};
+my $pal = qr{[\wáàãéúíóç]+};                                                                          #palavra [a-zA-Z_0-9]+
+my $all = qr{(([^\n]$pal)|[.,;-?!«»:'"])(\W$pal?)*};
 my $allP = qr{([^\n]$pal)(\W$pal?)*?};
 
 while(<>){
-  s/(^\s?|[.!?":]([ \n]|$PM)|^-- )/$1_/g;
-  while(/(\b$np)($all)($np)/g){
+  s/(^[\s'"«]?|[.!?":;]([ \n]|$PM)|^-- )/$1_/g;
+  s/\b($np)/{$1}/g;
+
+  while(/{($np)}($all){($np)}/g){
     my @pessoas;
     $fPers = $1;                                                                            #guarda o primeiro nome do paragrafo
     $sPers = $7;                                                                            #guarda o último nome do paragrafo
     $tudo = $3;                                                                             #guarda todo o conteudo entre os nomes próprios
     $count = 0;
-    $pessoas[$count++] = $fPers;                                                            #guardar o primeiro nome no array
-    if($tudo =~ /($np)/){                                                                  #se paragrafo tiver mais do que 2 nomes proprios
-      while($tudo =~ /($allP) ($np)($all)/){                                               #enquanto enquanto houver nomes próprios entre os dois nomes próprios do maior regex
+    $pessoas[$count++] = $fPers;  
+    if($tudo =~ /{($np)}/){
+      while($tudo =~ /($allP) \{($np)\}($all)/){                                               #enquanto enquanto houver nomes próprios entre os dois nomes próprios do maior regex
         $pessoa = $4;
         $countAux = 0;
         foreach $a (keys @pessoas){
@@ -91,42 +93,43 @@ while(<>){
       }
     }
   }
+  s/{($np)}/$1/g;
   s/_//g;
 }
 
-#print "As relações de parentesco são: \n";
+print "As relações de parentesco são: \n";
 
-#for (sort{$sortedHashP{$b} <=> $sortedHashP{$a}} keys %sortedHashP){
-#    if(/($np)-($np)-($par)/g) {
-#       $union = "$1-$3-$5";
-#	     print "$1 -> $3 -> $5\n";
-#    }
-#    $i--;
-#    if ($i eq 0) {last;}
-#}
+for (sort{$sortedHashP{$b} <=> $sortedHashP{$a}} keys %sortedHashP){
+    if(/($np)-($np)-($par)/g) {
+       $union = "$1-$3-$5";
+       
+    }
+    $i--;
+    if ($i eq 0) {last;}
+}
 
-#$i = 20;
+$i = 20;
 
-#print "As outras relações são: \n";
+print "As outras relações são: \n";
 
 for (sort{$sortedHash{$b} <=> $sortedHash{$a}} keys %sortedHash){
     if(/($np)-($np)/g) {
        $union = "$1-$3";
        if ($1 !~ /$3/ && $3 !~ /$1/) {
           $graph->add_edge ($1, $3);
-	        #print "$1 -> $3 -> $sortedHash{$union}\n";
+	      print "$1 -> $3 -> $sortedHash{$union}\n";
        }
     }
     $i--;
     if ($i eq 0) {last;}
 }
 
-my $DOT;
-my $graphviz = $graph->as_graphviz();
-open $DOT, '|dot -Grankdir=LR -Tpng -o graph.png' or die ("Cannot open pipe to dot: $!");
-print $DOT $graphviz;
-close $DOT;
-print $graph->as_html_file( );
+#my $DOT;
+#my $graphviz = $graph->as_graphviz();
+#open $DOT, '|dot -Grankdir=LR -Tpng -o graph.png' or die ("Cannot open pipe to dot: $!");
+#print $DOT $graphviz;
+#close $DOT;
+#print $graph->as_html_file( );
 
 #verifica se o tuplo de Nomes proprios que se relacionam já apareceram anteriormente -- caso em que existe relação
 sub verifica_relacao {
@@ -138,7 +141,7 @@ sub verifica_relacao {
   if ($sortedHashP{$tempVr}) {
     $sortedHashP{$tempVr}++;
   }
-  else {
+  else { 
     $tempVr = "$p1-$p2-$r";
     $sortedHashP{$tempVr}++;
     $verify{$tempVr2}++;
