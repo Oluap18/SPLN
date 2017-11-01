@@ -37,30 +37,31 @@ while(<>){
 	    $uPers = $4;          																#Guardar o último nome próprio da regex
 	    $tudo = $3;                                                                         #guarda todo o conteudo entre o primeiro e último nome próprio
 	    $pessoas{$fPers}++;																	#guarda todas as ocorrências de nomes próprios											
-
+	    #Se tiver mais que 2 nomes próprios
 	    if($tudo =~ /{($np)}/){																#Verifica se existe um nome próprio entre o primeiro e último nome próprio
 	      	while($tudo =~ /($allP) \{($np)\}($all)/){										#Trata todos os nomes próprios entre o primeiro e último nome próprio
 		        $pessoa = $2;
-		        if(!exists $pessoas{$pessoa}){
-			        foreach my $key (keys %pessoas){
-					    verifica($key, $pessoa);
+		        if(!exists $pessoas{$pessoa}){												#Evita guardar pessoas "repetidas" no regex, para apenas relacionar 1 vez a pessoa com as outras
+			        foreach my $key (keys %pessoas){										#Percorre as pessoas que precedem a $Pessoa, relacionando-as com esta
+					    verifica($key, $pessoa);											#Insere a pessoa na hash
 				   	}
-			      	$pessoas{$pessoa}++; 		     
-			    }                                                   #guardar os nomes próprios
-			    $tudo = $4;                                         #iterar o ciclo
+			      	$pessoas{$pessoa}++; 													#Guarda a pessoa na hash para relacionar com as seguintes		     
+			    }
+			    $tudo = $4;                                         						#itera o ciclo para procurar mais pessoas
 		    }
-		    if(!exists $pessoas{$uPers}){
+		    if(!exists $pessoas{$uPers}){													#Verifica se a última pessoa da regex já foi mencionada
 			    foreach my $key (keys %pessoas){
-			       	verifica($key, $uPers);
+			       	verifica($key, $uPers);													#Relaciona a última pessoa da regex com as que precedem esta
 			    }
 		    }
 		}
+		#Se tiver só 2 nomes próprios
 		else{
-		  	verifica($fPers, $uPers);
+		  	verifica($fPers, $uPers);														#Caso só exista 2 nomes próprios, relaciona estes
 	    }
 	}
-	s/{($np)}/$1/g;
-	s/_//g;
+	s/{($np)}/$1/g;																			#Repõe o texto original
+	s/_//g;																					#Repõe o texto original
 }
 
 #print "As outras relações são: \n";
@@ -77,11 +78,6 @@ for (sort{$sortedHash{$b} <=> $sortedHash{$a}} keys %sortedHash){
     if ($i eq 0) {last;}
 }
 
-#my $DOT;
-#my $graphviz = $graph->as_graphviz();
-#open $DOT, '|dot -Grankdir=LR -Tpng -o graph.png' or die ("Cannot open pipe to dot: $!");
-#print $DOT $graphviz;
-#close $DOT;
 print $graph->as_html_file( );
 
 #verifica se o tuplo de Nomes proprios que se relacionam já apareceram anteriormente
