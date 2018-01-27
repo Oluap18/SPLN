@@ -1,18 +1,15 @@
 use strict;
-use Lingua::Stem;
+use threads;
+use threads::shared;
 
-my %rules;
+my %rulesAux; #O que suporta as regras iniciais
+my %rules:shared; #O que vai suportar as regras aquando aplicada a lemmatização
 
 my $rule;
 my $answer;
 my $input;
-my @token;
 
 my $pal = qr{[\wáàãéêúíóç]+};	
-my $stemmer = Lingua::Stem->new(-locale => 'pt');
-
-
-
 
 #Guardar as regras. 
 #Regras começadas por R: são regras.
@@ -24,48 +21,36 @@ while(<>){
 	#Guardar as repostas
 	if(/A: (.*)/){
 		$answer = $1;
-		$rules{$rule}=$answer;
+		$rulesAux{$rule}=$answer;
 	}
 }
 
-my $pid = open(my $fh, "analyze -f /usr/local/share/freeling/config/pt.cfg --flush");
-
-if($pid){
-	system("echo Ola");
-	print $fh;
-}
-
-for my $key (keys %rules){
+#Tokanizar e lemmatizar as regras
+for my $key(keys %rulesAux){
 	my $string;
-	#Segmenting/tokenizing a Regra
-	while($key =~ /($pal|["\.!?$\,;:]) ?(.*)/){
-		print "[$1]\n";
-		$string = join('', $string, "$1 ");
-		$key = $2;
+	async{
+		my @output = qx{echo '$key' | analyze -f /usr/local/share/freeling/config/pt.cfg};
+		for (@output){
+			if($_){ 		#para retirar possiveis \n que tenha
+				/.*? (.*?) .*/;
+				$string = join('', $string, "$1 ");
+			}
+		}
+		$rules{$string} = $rulesAux{$key};
 	}
 }
 
+#Proceder à comparação de perguntas, às regras.
 while($input = <STDIN>){
 
 	for my $key(keys %rules){
 		my @arrayRule;
 		my @arrayQuest;
 
-		#Segmenting/tokenizing a Regra
-		while($key =~ /($pal|["\.!?$\,;:]) ?(.*)/){
-			print "[$1]\n";
-			push @arrayRule, $1;
-			$key = $2;
-		}
 		#Segmenting/tokenizing a Pergunta
 		while($input =~ /($pal|[".!?$\,;:]) ?(.*)/){
 			push @arrayQuest, $1;
 			$input = $2;
 		}
-		print "@arrayRule\n";
-		my $stemmed_words = $stemmer->stem(@arrayRule);
-		print "@{$stemmed_words}\n";
 	}
 }
-
-close($fh);
