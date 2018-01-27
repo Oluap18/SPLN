@@ -5,6 +5,7 @@ use threads::shared;
 my %rulesAux; #O que suporta as regras iniciais
 my %rules:shared; #O que vai suportar as regras aquando aplicada a lemmatização
 
+my @threads;
 my $rule;
 my $answer;
 my $input;
@@ -24,11 +25,11 @@ while(<>){
 		$rulesAux{$rule}=$answer;
 	}
 }
-
+my $thread;
 #Tokanizar e lemmatizar as regras
 for my $key(keys %rulesAux){
 	my $string;
-	async{
+	push @threads, async{
 		my @output = qx{echo '$key' | analyze -f /usr/local/share/freeling/config/pt.cfg};
 		for (@output){
 			if($_){ 		#para retirar possiveis \n que tenha
@@ -38,6 +39,14 @@ for my $key(keys %rulesAux){
 		}
 		$rules{$string} = $rulesAux{$key};
 	}
+}
+
+for(@threads){
+	$_ -> join;
+}
+
+for(keys %rules){
+	print "$_\n";
 }
 
 #Proceder à comparação de perguntas, às regras.
