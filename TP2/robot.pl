@@ -50,16 +50,35 @@ for(keys %rules){
 }
 
 #Proceder à comparação de perguntas, às regras.
-while($input = <STDIN>){
-
-	for my $key(keys %rules){
-		my @arrayRule;
-		my @arrayQuest;
-
-		#Segmenting/tokenizing a Pergunta
-		while($input =~ /($pal|[".!?$\,;:]) ?(.*)/){
+while(<STDIN>){
+	my $string;
+	my $counter = 0;
+	my @arrayQuest;
+	#Lemmatizar e tokanizar a pergunta do utilizador
+	my @output = qx{echo '$_' | analyze -f /usr/local/share/freeling/config/pt.cfg};
+	for (@output){
+		if($_){ 		#para retirar possiveis \n que tenha
+			/.*? (.*?) .*/;
 			push @arrayQuest, $1;
-			$input = $2;
 		}
+	}
+
+	#Comparar a pergunta às rules
+	for my $key(keys %rules){
+		my $valorComp;
+		my $keyOri = $key;
+		my @arrayRule;
+		my @palavrasIguais;
+
+		#Segmenting/tokenizing a Rule
+		while($key =~ /(.*?) (.*)/){
+			push @arrayRule, $1;
+			$key = $2;
+		}
+
+		for(@arrayQuest){
+			
+		}
+
 	}
 }
