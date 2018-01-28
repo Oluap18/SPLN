@@ -119,5 +119,6 @@ while(<STDIN>){
 			}
 		}
 	}
-	print "$answer\n";
+	print "$answer\n" if(valorComp != 0);
+	print "Não sei responder a isso.\n" if(valorComp == 0);
 }
