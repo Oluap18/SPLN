@@ -88,6 +88,7 @@ while(<STDIN>){
 			}
 			#Se encontrou uma palavra igual
 			if($counterR != (scalar keys %arrayRule) -1){
+				print "$arrayRule{$counterR}\n";
 				#Somar o valor de comparação bónus das palavras seguidas, mais o facto de a palavra ser igual
 				$valorCompAux+=$valorBonus+1;
 				$valorBonus++;
@@ -119,6 +120,13 @@ while(<STDIN>){
 			}
 		}
 	}
-	print "$answer\n" if(valorComp != 0);
-	print "Não sei responder a isso.\n" if(valorComp == 0);
+	my $line;
+	print "$answer\n" if($valorComp != 0);
+	if($valorComp == 0){
+		srand;
+		open FILE, "<proverbios.txt" or die "Could not open filename: $!\n";
+		rand($.)<1 and ($line=$_) while <FILE>;
+		close FILE;
+		print "$line";
+	}
 }
