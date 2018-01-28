@@ -45,40 +45,79 @@ for(@threads){
 	$_ -> join;
 }
 
-for(keys %rules){
-	print "$_\n";
-}
+print "Ola, queres conversar comigo?\n";
 
 #Proceder à comparação de perguntas, às regras.
 while(<STDIN>){
 	my $string;
 	my $counter = 0;
-	my @arrayQuest;
+	my %arrayQuest;
 	#Lemmatizar e tokanizar a pergunta do utilizador
 	my @output = qx{echo '$_' | analyze -f /usr/local/share/freeling/config/pt.cfg};
 	for (@output){
 		if($_){ 		#para retirar possiveis \n que tenha
 			/.*? (.*?) .*/;
-			push @arrayQuest, $1;
+			$arrayQuest{$counter++} = $1;
 		}
 	}
-
+	my $valorComp = 0;
+	my $keyOri;
+	my $answer;
+	my $nPal = 0;
 	#Comparar a pergunta às rules
 	for my $key(keys %rules){
-		my $valorComp;
-		my $keyOri = $key;
-		my @arrayRule;
-		my @palavrasIguais;
+		$keyOri = $key;
+		my %arrayRule;
+		my $counterR = 0;
+		my $valorCompAux = 0;
+		my $counterQ = 0;
+		my $valorBonus = 0;			#Valor de comparação bónus por ter palavras seguidas iguais
 
+		chomp $key;
 		#Segmenting/tokenizing a Rule
 		while($key =~ /(.*?) (.*)/){
-			push @arrayRule, $1;
+			$arrayRule{$counterR++} = $1;
 			$key = $2;
 		}
-
-		for(@arrayQuest){
-			
+		#Percorrer todas as palavras da pergunta
+		while($counterQ != (scalar keys %arrayQuest) - 1){
+			$counterR = 0;
+			#Percorrer todas as palavras da rule, até encontrar uma palavra igual à da pergunta
+			while(!($arrayQuest{$counterQ} =~ /\Q$arrayRule{$counterR}\E/)){
+				$counterR++;
+			}
+			#Se encontrou uma palavra igual
+			if($counterR != (scalar keys %arrayRule) -1){
+				#Somar o valor de comparação bónus das palavras seguidas, mais o facto de a palavra ser igual
+				$valorCompAux+=$valorBonus+1;
+				$valorBonus++;
+			}
+			#Se não encontrou
+			else{
+				$valorBonus--;
+			}
+			#Proxima palavra
+			$counterQ++;
 		}
-
+		my $teste = (scalar keys %arrayRule) -1;
+		#Se tiver mais pontos de comparação.
+		if($valorCompAux > $valorComp){
+			#Guarda o valor de comparação, a resposta e o número de palavras da rule
+			$valorComp = $valorCompAux;
+			$answer = $rules{$keyOri};
+			$nPal = (scalar keys %arrayRule) -1;
+		}
+		#Se tiver os mesmos pontos de comparação, é escolhido
+		#O texto que tiver menos palavras.
+		if($valorCompAux == $valorComp){
+			#Se a rule tiver menos palavra que a antiga
+			if((scalar keys %arrayRule) - 1 < $nPal){
+				#Guarda o valor de comparação, a resposta e o número de palavras da rule
+				$valorComp = $valorCompAux;
+				$answer = $rules{$keyOri};
+				$nPal = (scalar keys %arrayRule) -1;
+			}
+		}
 	}
+	print "$answer\n";
 }
