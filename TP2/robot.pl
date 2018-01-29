@@ -121,8 +121,10 @@ while(<STDIN>){
 		}
 	}
 	my $line;
-	print "$answer\n" if($valorComp != 0);
-	if($valorComp == 0){
+	if($valorComp > 0) {
+		print "$answer\n";
+	}
+	else{
 		srand;
 		open FILE, "<proverbios.txt" or die "Could not open filename: $!\n";
 		rand($.)<1 and ($line=$_) while <FILE>;

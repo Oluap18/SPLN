@@ -61,8 +61,7 @@ while(<STDIN>){
 	my @output = qx{echo '$_' | analyze -f /usr/local/share/freeling/config/pt.cfg};
 	chomp(@output);
 	for (@output){
-		if($_){ #Chomp não funciona por alguma razão
-			print "$_\n";
+		if($_){ #Chomp tira todos por alguma razão
 			/.*? (.*?) .*/;
 			$arrayQuest{$counter++} = $1;
 		}
@@ -75,23 +74,17 @@ while(<STDIN>){
 			$indice = $_;
 			for my $key(keys %arrayQuest){
 				if($arrayQuest{$key} =~ /visitar/ && $key > $indice){
-					#print "ola\n";
-					my @wikipedia = qx{curl -sA "Chrome" -L 'http://www.google.com/search?hl=pt&q=Portugal_Principais_Locais' -O search.html};
-					#print @wikipedia;
-					for my $key(@wikipedia){
-						#print "$key\n";
-						while(/<span class="_G0d">($np)<\/span>(.*)/g){
-							print "$1\n";
-						}
+					my $wikipedia = qx{curl -sA "Chrome" -L 'http://www.google.com/search?hl=pt&q=Portugal_Principais_Locais&ie=UTF-8'};
+					while($wikipedia =~ /,<br>(.*?)<\/span>(.*)/){
+						print "$1\n";
+						$wikipedia = $2;
 					}
-				}					
 					$topico = 1;	#Resposta dada pela vertente do turismo do bot.
 					last;
+				}					
 			}
 		}
 	}
-
-
 
 	if($topico == 0){
 		my $valorComp = 0;
