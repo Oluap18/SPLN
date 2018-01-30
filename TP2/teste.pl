@@ -255,7 +255,7 @@ sub personInfo{
   my $content = $response->content();
   open my $fh, "<", \$content;
   while(my $row = <$fh>) {
-    if ($row =~ /<p><b>(.+)\.<\/p>/) {
+    if ($row =~ /<p><b>(.+)\.(.+)?<\/p>/) {
       $info = $1;
     }
   }
