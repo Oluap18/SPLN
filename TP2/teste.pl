@@ -32,18 +32,34 @@ while(<>){
 my $thread;
 #Tokanizar e lemmatizar as regras
 for my $key(keys %rulesAux){
+	my $aux = $key;
+	my $counter = 0;
 	my $string;
+	my @raw;
 	push @threads, async{
+		while($aux =~ /(["',.!?()+*]|(\w+) ?)(.*)/){
+			$raw[$counter++]= $1;
+			$aux = $3;
+		}
 		my @output = qx{echo '$key' | analyze -f /usr/local/share/freeling/config/pt.cfg};
+		$counter = 0;
 		for (@output){
 			if($_){ 		#para retirar possiveis \n que tenha
 				/.*? (.*?) .*/;
-				$string = join('', $string, "$1 ");
+				my $aux = $1;
+				if($raw[$counter] =~ /[A-Z]\w*/){
+					$string = join('', $string, ucfirst($aux), " ");
+				}
+				else{
+					$string = join('', $string, "$aux ");
+				}
+				$counter++;
 			}
 		}
 		$rules{$string} = $rulesAux{$key};
 	}
 }
+
 
 for(@threads){
 	$_ -> join;
@@ -55,38 +71,43 @@ print "Ola, queres conversar comigo?\n";
 while(<STDIN>){
 	$topico = 0;
 	my $string;
+	my $aux = $_;
 	my $counter = 0;
 	my %arrayQuest;
+	my @raw;
 	#Lemmatizar e tokanizar a pergunta do utilizador
+	while($aux =~ /(["',.!?()+*]|(\w+) ?)(.*)/){
+		$raw[$counter++]= $1;
+		$aux = $3;
+	}
 	my @output = qx{echo '$_' | analyze -f /usr/local/share/freeling/config/pt.cfg};
+	$counter = 0;
 	chomp(@output);
 	for (@output){
 		if($_){ #Chomp tira todos por alguma razão
 			/.*? (.*?) .*/;
-			$arrayQuest{$counter++} = $1;
-		}
-	}
-
-	my $indice;
-	#Secção do turismo
-	for(keys %arrayQuest){
-		if($arrayQuest{$_} =~ /cidade/ || $arrayQuest{$_} =~ /destino/){
-			$indice = $_;
-			for my $key(keys %arrayQuest){
-				if($arrayQuest{$key} =~ /visitar/ && $key > $indice){
-					my $wikipedia = qx{curl -sA "Chrome" -L 'http://www.google.com/search?hl=pt&q=Portugal_Principais_Locais&ie=UTF-8'};
-					while($wikipedia =~ /,<br>(.*?)<\/span>(.*)/){
-						print "$1\n";
-						$wikipedia = $2;
-					}
-					$topico = 1;	#Resposta dada pela vertente do turismo do bot.
-					last;
-				}					
+			my $aux = $1;
+			if($raw[$counter] =~ /[A-Z]\w*/){
+				$arrayQuest{$counter++} = ucfirst($aux);
+			}
+			else{
+				$arrayQuest{$counter++} = $aux;
 			}
 		}
 	}
 
-	if($topico == 0){
+	#Secção do turismo
+	for(keys %arrayQuest){
+		my $indice;
+		if($arrayQuest{$_} =~ /(cidade|turismo|local|conhecer|visitar)/){
+			$indice = $_;
+			turismo(\%arrayQuest, $indice);
+			$topico = "1";	#Resposta dada pela vertente do turismo do bot.
+			last;					
+		}
+	}
+
+	if($topico == "0"){
 		my $valorComp = 0;
 		my $keyOri;
 		my $answer;
@@ -107,8 +128,6 @@ while(<STDIN>){
 				$key = $2;
 			}
 
-
-
 			#Percorrer todas as palavras da pergunta
 			while($counterQ != (scalar keys %arrayQuest) - 1){
 				$counterR = 0;
@@ -118,7 +137,6 @@ while(<STDIN>){
 				}
 				#Se encontrou uma palavra igual
 				if($counterR != (scalar keys %arrayRule) -1){
-					print "$arrayRule{$counterR}\n";
 					#Somar o valor de comparação bónus das palavras seguidas, mais o facto de a palavra ser igual
 					$valorCompAux+=$valorBonus+1;
 					$valorBonus++;
@@ -160,4 +178,18 @@ while(<STDIN>){
 			print "$line";
 		}
 	}
+}
+
+sub turismo{
+	my ($arrayQuest, $indice) = @_;
+	while(!($arrayQuest->{++$indice} =~ /[A-Z].*/)){}
+			if($indice != (scalar keys %$arrayQuest)){
+				my $nome = $arrayQuest->{$indice++};
+				my $url = join('', "http://www.google.com/search?hl=pt&q=", $nome, "_Principais_Locais&ie=UTF-8");
+				my $results = qx(curl -sA "Chrome" -L '$url');
+				while($results =~ /,<br>(.*?)<\/span>(.*)/){
+					print "$1\n";
+					$results = $2;
+				}
+			}
 }

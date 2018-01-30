@@ -1,6 +1,7 @@
 use strict;
 use threads;
 use threads::shared;
+use utf8::all;
 
 my %rulesAux; #O que suporta as regras iniciais
 my %rules:shared; #O que vai suportar as regras aquando aplicada a lemmatização
