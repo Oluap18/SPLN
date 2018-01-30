@@ -271,3 +271,24 @@ sub personInfo{
     print "Desculpa mas não consegui obter nenhuma informação.\n"
   }
 }
+
+#Se não for especificada o assunto da noticia, a variavel search deve ficar a "mundo" | 4 noticias neste momento
+sub noticias{
+  my $news;
+  my $counter = 1;
+  my $search = shift;
+  my $url = join('', "http://www.google.pt/search?q=", $search, "+noticias&source=lnms&tbm=nws&sa=X&ved");
+  my $results = qx(curl -sA "Chrome" -L '$url' | iconv -f iso8859-1 -t utf-8);
+  while($results =~ /class="st">(.*?)\./g){
+    $_ = $1;
+    s/<.*?>//g;
+    s/\[[0-9]+\]//g;
+    print "Noticia $counter:\n";
+    $news = $_;
+    print "--> $news;\n\n";
+    $counter++;
+    if ($counter eq 5) {
+      last;
+    }
+  }
+}
