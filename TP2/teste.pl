@@ -238,3 +238,36 @@ sub weather{
     print "$first \n $second \n"
   }
 }
+
+#palavras-chave: informações, informação, Quem + verbo ser, biografia
+#recebe o nome da pessoa, em qualquer formato (quer maiscula como miniscula)
+sub personInfo{
+  my $name = shift;
+  my $info;
+  $_ = $name;
+  s/ +/_/g;
+  $name = $_;
+  my $ua = new LWP::UserAgent;
+  $ua->timeout(120);
+  my $url="https://pt.wikipedia.org/wiki/$name";
+  my $request = new HTTP::Request('GET', $url);
+  my $response = $ua->request($request);
+  my $content = $response->content();
+  open my $fh, "<", \$content;
+  while(my $row = <$fh>) {
+    if ($row =~ /<p><b>(.+)\.<\/p>/) {
+      $info = $1;
+    }
+  }
+  $_ = $info;
+  if ($info) {
+    s/<.*?>//g;
+    s/\[[0-9]+\]//g;
+    print "$name\n";
+    $info = $_;
+    print "\n$info. \n \n \n";
+  }
+  else {
+    print "Desculpa mas não consegui obter nenhuma informação.\n"
+  }
+}
