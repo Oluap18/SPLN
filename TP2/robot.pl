@@ -1,14 +1,11 @@
 use strict;
-use threads;
-use threads::shared;
 use LWP::UserAgent;
-use utf8::all;
 use Unicode::Normalize;
+use IPC::Open3;
 
 my %rulesAux; #O que suporta as regras iniciais
-my %rules:shared; #O que vai suportar as regras aquando aplicada a lemmatização
+my %rules; #O que vai suportar as regras aquando aplicada a lemmatização
 
-my @threads;
 my $rule;
 my $answer;
 my $input;
@@ -21,6 +18,8 @@ my $np = qr{$PM ($s $PM| $PM)*}x;
 my @pickUpLines = ("\n-> Muito bem. Que mais queres falar?\nMe: ",
 										"\n-> Continuo à tua disposição para qualquer coisa.\nMe: ",
 										"\n-> Estas não são as únicas informações que eu posso disponibilizar! Existem muitas mais!\nMe: ");
+my $pid = open3(\*WRITE, \*READ,0,"analyze -f /usr/local/share/freeling/config/pt.cfg --flush");
+select (undef, undef, undef, 4);
 
 
 #Guardar as regras.
@@ -36,40 +35,43 @@ while(<>){
 		$rulesAux{$rule}=$answer;
 	}
 }
-my $thread;
 #Tokanizar e lemmatizar as regras
 for my $key(keys %rulesAux){
 	my $aux = $key;
 	my $counter = 0;
 	my $string;
 	my @raw;
-	push @threads, async{
-		while($aux =~ /(["',.!?()+*]|($PM+)[ -]?)(.*)/){
-			$raw[$counter++]= $1;
-			$aux = $3;
-		}
-		my @output = qx{echo '$key' | analyze -f /usr/local/share/freeling/config/pt.cfg};
-		$counter = 0;
-		for (@output){
-			if($_){ 		#para retirar possiveis \n que tenha
-				/.*? (.*?) .*/;
-				my $aux = $1;
-				if($raw[$counter] =~ /[A-Z]$PM*/){
-					$string = join('', $string, ucfirst($aux), " ");
-				}
-				else{
-					$string = join('', $string, "$aux ");
-				}
-				$counter++;
-			}
-		}
-		$rules{$string} = $rulesAux{$key};
+	while($aux =~ /(["',.!?()+*]|($PM+)[ -]?)(.*)/){
+		$raw[$counter++]= $1;
+		$aux = $3;
 	}
-}
-
-
-for(@threads){
-	$_ -> join;
+	my @output;
+	print WRITE "$key\n";
+	select(undef, undef, undef, 0.5);
+	while(my $read = <READ>){
+		#Se for igual, é 0
+		if(!($read eq "\n")){
+			push @output, $read;
+		}
+		else{
+			last;
+		}
+	}
+	$counter = 0;
+	for (@output){
+		if($_){ 		#para retirar possiveis \n que tenha
+			/.*? (.*?) .*/;
+			my $aux = $1;
+			if($raw[$counter] =~ /[A-Z]$PM*/){
+				$string = join('', $string, ucfirst($aux), " ");
+			}
+			else{
+				$string = join('', $string, "$aux ");
+			}
+			$counter++;
+		}
+	}
+	$rules{$string} = $rulesAux{$key};
 }
 
 print "--> Olá, queres conversar comigo?\nMe: ";
@@ -87,9 +89,19 @@ while(<STDIN>){
 		$raw[$counter++]= $1;
 		$aux = $3;
 	}
-	my @output = qx{echo '$_' | analyze -f /usr/local/share/freeling/config/pt.cfg};
+	my @output; 
+	print WRITE "$_\n";
+	select(undef, undef, undef, 0.5);
+	while(my $read = <READ>){
+		#Se for igual, é 0
+		if(!($read eq "\n")){
+			push @output, $read;
+		}
+		else{
+			last;
+		}
+	}
 	$counter = 0;
-	chomp(@output);
 	for (@output){
 		if($_){ #Chomp tira todos por alguma razão
 			/.*? (.*?) .*/;
@@ -112,8 +124,8 @@ while(<STDIN>){
 			while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/) & $indice != scalar keys %arrayQuest){}
 			if($indice != (scalar keys %arrayQuest)){
 				my $nome = $arrayQuest{$indice};
-				turismo($nome);
 				$resposta = "1";
+				turismo($nome);
 			}
 		}
 		#Meteorologia
@@ -127,8 +139,8 @@ while(<STDIN>){
 				$nome =~ s/\p{NonspacingMark}//g;
 				#Colocar as palavras a minúsculo
 				$nome =~ y/[A-Z]_/[a-z]-/;
-				weather($nome);
 				$resposta = "1";
+				weather($nome);
 			}
 		}
 		#Biografia
@@ -148,8 +160,8 @@ while(<STDIN>){
 								$nomeCaps = join('', $nomeCaps, ucfirst($1), "_");
 							}
 							$nomeCaps = join('', $nomeCaps, ucfirst($nome));
-							personInfo($nomeCaps);
 							$resposta = "1";
+							personInfo($nomeCaps);
 						}
 					}
 				}
@@ -165,8 +177,8 @@ while(<STDIN>){
 						$nomeCaps = join('', $nomeCaps, ucfirst($1), "_");
 					}
 					$nomeCaps = join('', $nomeCaps, ucfirst($nome));
-					personInfo($nomeCaps);
 					$resposta = "1";
+					personInfo($nomeCaps);
 				}
 			}
 		}
@@ -179,13 +191,13 @@ while(<STDIN>){
 			if($indice != (scalar keys %arrayQuest)){
 				$nome = $arrayQuest{$indice};
 				$nome =~ y/[A-ZÁÀÃÉÊÚÍÓÕÇ]_/[a-zaaaeeuiooç]-/;
-				noticias($nome, 0);
 				$resposta = "1";
+				noticias($nome, 0);
 			}
 			else{
 				$nome = "Mundo";
-				noticias($nome, 1);
 				$resposta = "1";
+				noticias($nome, 1);
 			}
 		}
 		last if($resposta == "1");
@@ -194,8 +206,11 @@ while(<STDIN>){
 	if($resposta == "0"){
 		regras(\%rules, \%arrayQuest);
 	}
-
 }
+
+close(WRITE);
+close(READ);
+waitpid($pid, 1);
 
 sub regras{
 	my ($rules, $arrayQuest) = @_;
@@ -263,7 +278,13 @@ sub regras{
 		}
 	}
 	my $line;
-	my $val = ($nPal + ($nPal-1)*2)*0.3;
+	my $val;
+	if($nPal != 0){
+		$val = ($nPal + ($nPal-1)*2)*0.3;
+	}
+	else{
+		$val = 0;
+	}
 	if($valorComp > $val){
 		print "\n-> $answer\nMe: ";
 	}
@@ -309,9 +330,9 @@ sub turismo{
 			print "  -- $locais[$counter++]\n";
 		}
 		print "\n-> Deseja conhecer mais locais?\nMe: ";
-		$resposta = <STDIN>;
-		$resposta =~ y/[A-Z]/[a-z]/;
-		if($resposta =~ /sim/){
+		$input = <STDIN>;
+		$input =~ y/[A-Z]/[a-z]/;
+		if($input =~ /sim/){
 			print "\n-> Estes são os restantes locais turísticos que conheço:\n";
 			while($counter != scalar @locais){
 				print "  -- $locais[$counter++]\n";
@@ -436,13 +457,13 @@ sub personInfo{
 	$_ = $info;
 	if ($info) {
 			s/<.*?>//g;
-	    s/\[[0-9]+\]//g;
+	    	s/\[[0-9]+\]//g;
 			s/\[[A-Za-z]+ [0-9]+\]//g;
 			s/&#//g;
 			$rand = int(rand(scalar @intro -1));
 			print $intro[$rand];
-	    $info = $_;
-	    print "[] $info.\n";
+	   		$info = $_;
+	    	print "[] $info.\n";
 			$rand = int(rand(2));
 			if (($rand % 2) eq 0) {
 				$rand = int(rand(scalar @pickUpLines -1));
