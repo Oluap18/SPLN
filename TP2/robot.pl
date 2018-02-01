@@ -105,10 +105,11 @@ while(<STDIN>){
 
 	for my $counter (keys %arrayQuest){
 		my $indice;
+
 		#Turismo
 		if($arrayQuest{$counter} =~ /([Cc]idade|[Tt]urismo|[Ll]ocal|[Cc]onhecer|[Vv]isitar|[Ii]nformação)/){
 			$indice = $counter;
-			while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/)){}
+			while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/) & $indice != scalar keys %arrayQuest){}
 			if($indice != (scalar keys %arrayQuest)){
 				my $nome = $arrayQuest{$indice};
 				turismo($nome);
@@ -118,7 +119,7 @@ while(<STDIN>){
 		#Meteorologia
 		if($arrayQuest{$counter} =~ /([Tt]empo|[Mm]eteorologia|[Tt]emperatura|[Tt]emperaturas|[Mm]eteorológico|[Mm]eteorologia|[Ii]nformação)/){
 			$indice = $counter;
-			while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/)){}
+			while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/) & $indice != scalar keys %arrayQuest){}
 			if($indice != (scalar keys %arrayQuest)){
 				my $nome = $arrayQuest{$indice};
 				#Retirar acentos
@@ -138,7 +139,7 @@ while(<STDIN>){
 				for my $key(keys %arrayQuest){
 					if($arrayQuest{$key} =~ /ser/ & $key > $indice){
 						$indice = $key;
-						while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/)){}
+						while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/) & $indice != scalar keys %arrayQuest){}
 						if($indice != (scalar keys %arrayQuest)){
 							my $nome = $arrayQuest{$indice};
 							my $nomeCaps;			#Nome com as letras iniciais maiúscilas
@@ -155,7 +156,7 @@ while(<STDIN>){
 			}
 			#Todas as outras
 			else{
-				while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/)){}
+				while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/ & $indice != scalar keys %arrayQuest)){}
 				if($indice != (scalar keys %arrayQuest)){
 					my $nome = $arrayQuest{$indice};
 					my $nomeCaps;			#Nome com as letras iniciais maiúscilas
@@ -172,7 +173,8 @@ while(<STDIN>){
 		#Noticias
 		if($arrayQuest{$counter} =~ /([Nn]oticiar|[Ii]nformação)/){
 			$indice = $counter;
-			while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/)){}
+			while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/) & $indice != scalar keys %arrayQuest){
+			}
 			my $nome;
 			if($indice != (scalar keys %arrayQuest)){
 				$nome = $arrayQuest{$indice};
@@ -336,7 +338,7 @@ sub weather{
 	my $city = shift;
 	my $counter = 1;
 	my @cold = ("\n-> Que frio! A temperatura mínima para hoje em $city é bastante baixa! ",
-							"\n-> Atenção que às temperaturas bastante baixas em $city! ");
+							"\n-> Atenção às temperaturas bastante baixas em $city! ");
 	my @pleasant = ("\n-> Espera-se uma temperatura bastante amena hoje, em $city! ",
 									"\n-> Temperaturas bastante amenas, no dia de hoje, em $city!" );
 	my @hot = ("\n-> Atenção às altas temperaturas que se esperam para $city! ",
@@ -449,43 +451,42 @@ sub personInfo{
 	 }
 }
 
-#Se não for especificada o assunto da noticia, a variavel search deve ficar a "mundo" | 4 noticias neste momento
 sub noticias{
-		my $rand;
+	my $rand;
   	my $news;
   	my $counter = 1;
   	my $search = shift;
-		my $tag = shift;
+	my $tag = shift;
   	my $url = join('', "http://www.google.pt/search?q=", $search, "+noticias&source=lnms&tbm=nws&sa=X&ved");
   	my $results = qx(curl -sA "Chrome" -L '$url' | iconv -f iso8859-1 -t utf-8);
-		if ($tag eq 0) {
-				print "\n-> Algumas das principais noticias sobre $search:\n\n";
-		}
-		else {
-			print "\n-> Algumas das principais noticias da atualidade:\n\n";
-		}
-		while($results =~ /class="st">(.*?)\./g){
+	if ($tag eq 0) {
+			print "\n-> Algumas das principais noticias sobre $search:\n\n";
+	}
+	else {
+		print "\n-> Algumas das principais noticias da atualidade:\n\n";
+	}
+	while($results =~ /class="st">(.*?)\./g){
     	$_ = $1;
-			if ($1) {
-    		s/<.*?>//g;
-    		s/\[[0-9]+\]//g;
-    		$news = $_;
-    		print "[$counter] $news.\n\n";
-    		$counter++;
-    		if ($counter eq 5) {
-      		last;
+		if ($1) {
+	   		s/<.*?>//g;
+	   		s/\[[0-9]+\]//g;
+	   		$news = $_;
+	   		print "[$counter] $news.\n\n";
+	   		$counter++;
+	   		if ($counter eq 5) {
+	   			last;
     		}
-			}
-			else {
-				$resposta="0";
-			 }
-  	}
-		$rand = int(rand(2));
-		if (($rand % 2) eq 0) {
-			$rand = int(rand(scalar @pickUpLines -1));
-			print $pickUpLines[$rand];
 		}
 		else {
-			print "\nMe: ";
+			$resposta="0";
 		}
+  	}
+	$rand = int(rand(2));
+	if (($rand % 2) eq 0) {
+		$rand = int(rand(scalar @pickUpLines -1));
+		print $pickUpLines[$rand];
+	}
+	else {
+		print "\nMe: ";
+	}
 }
