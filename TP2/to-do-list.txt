@@ -1,2 +1,0 @@
--> Acrescentar regras à lista de R: A:
--> Proposta de remoção de fornecer toda a info quando palavra chave é "informação", e passar a dar só a parte da wiki.
