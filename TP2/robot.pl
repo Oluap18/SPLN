@@ -471,6 +471,8 @@ sub noticias{
 		if ($1) {
 	   		s/<.*?>//g;
 	   		s/\[[0-9]+\]//g;
+				s/&quot;//g;
+				s/&nbsp;/../g;
 	   		$news = $_;
 	   		print "[$counter] $news.\n\n";
 	   		$counter++;
