@@ -263,7 +263,8 @@ sub regras{
 		}
 	}
 	my $line;
-	if($valorComp > 0){
+	my $val = ($nPal + ($nPal-1)*2)*0.3;
+	if($valorComp > $val){
 		print "\n-> $answer\nMe: ";
 	}
 	else{
