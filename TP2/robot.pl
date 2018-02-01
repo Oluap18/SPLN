@@ -277,8 +277,11 @@ sub regras{
 }
 
 sub turismo{
-	my @prefixos = ("\n-> Ah, ", "");
-	my @sufixos = (" tem muitos locais túristicos que podes visitar.\n", " belo sitio para passar férias.\n", " podes passar um bom tempo lá.\n");
+	my @prefixos = ("\n-> Ah, ", "\n-> ");
+	my @sufixos = (	" tem muitos locais túristicos que podes visitar.\n", 
+					" belo sitio para passar férias.\n", 
+					" podes passar um bom tempo lá.\n", 
+					" pode ser um bom sitio para visitar, dependendo do tempo claro.\n");
 	my @locais;
 	my ($nome) = @_;
 
@@ -411,8 +414,8 @@ sub weather{
 
 sub personInfo{
 	my $rand;
-	my @intro = ("\n-> Encontrei algumas informações que te podem ser úteis:\n",
-							"\n-> Consegui recolher algumas informações, ora confere:\n");
+	my @intro = (	"\n-> Encontrei algumas informações que te podem ser úteis:\n",
+					"\n-> Consegui recolher algumas informações, ora confere:\n");
 	my $name = shift;
 	my $info;
 	$_ = $name;
