@@ -1,0 +1,4 @@
+-> Acrescentar regras à lista de R: A:
+-> Fix Bug: noticias - quando o user introduz só "noticias" o programa crasha.
+-> Fix Bug: quando o user introduz "Quem és tu" o programa crasha.
+-> Proposta de remoção de fornecer toda a info quando palavra chave é "informação", e passar a dar só a parte da wiki.
