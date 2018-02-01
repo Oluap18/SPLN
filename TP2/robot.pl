@@ -107,7 +107,7 @@ while(<STDIN>){
 		my $indice;
 
 		#Turismo
-		if($arrayQuest{$counter} =~ /([Cc]idade|[Tt]urismo|[Ll]ocal|[Cc]onhecer|[Vv]isitar|[Ii]nformação)/){
+		if($arrayQuest{$counter} =~ /([Cc]idade|[Tt]urismo|[Ll]ocal|[Cc]onhecer|[Vv]isitar)/){
 			$indice = $counter;
 			while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/) & $indice != scalar keys %arrayQuest){}
 			if($indice != (scalar keys %arrayQuest)){
@@ -117,7 +117,7 @@ while(<STDIN>){
 			}
 		}
 		#Meteorologia
-		if($arrayQuest{$counter} =~ /([Tt]empo|[Mm]eteorologia|[Tt]emperatura|[Tt]emperaturas|[Mm]eteorológico|[Mm]eteorologia|[Ii]nformação)/){
+		if($arrayQuest{$counter} =~ /([Tt]empo|[Mm]eteorologia|[Tt]emperatura|[Tt]emperaturas|[Mm]eteorológico|[Mm]eteorologia)/){
 			$indice = $counter;
 			while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/) & $indice != scalar keys %arrayQuest){}
 			if($indice != (scalar keys %arrayQuest)){
@@ -171,7 +171,7 @@ while(<STDIN>){
 			}
 		}
 		#Noticias
-		if($arrayQuest{$counter} =~ /([Nn]oticiar|[Ii]nformação)/){
+		if($arrayQuest{$counter} =~ /([Nn]oticiar)/){
 			$indice = $counter;
 			while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/) & $indice != scalar keys %arrayQuest){
 			}
@@ -414,8 +414,8 @@ sub weather{
 
 sub personInfo{
 	my $rand;
-	my @intro = (	"\n-> Encontrei algumas informações que te podem ser úteis:\n",
-					"\n-> Consegui recolher algumas informações, ora confere:\n");
+	my @intro = ("\n-> Encontrei algumas informações que te podem ser úteis:\n",
+							"\n-> Consegui recolher algumas informações, ora confere:\n");
 	my $name = shift;
 	my $info;
 	$_ = $name;
@@ -435,8 +435,10 @@ sub personInfo{
 	}
 	$_ = $info;
 	if ($info) {
-		s/<.*?>//g;
+			s/<.*?>//g;
 	    s/\[[0-9]+\]//g;
+			s/\[[A-Za-z]+ [0-9]+\]//g;
+			s/&#//g;
 			$rand = int(rand(scalar @intro -1));
 			print $intro[$rand];
 	    $info = $_;
