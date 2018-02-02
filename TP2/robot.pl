@@ -19,7 +19,6 @@ my @pickUpLines = ("\n-> Muito bem. Que mais queres falar?\nMe: ",
 										"\n-> Continuo à tua disposição para qualquer coisa.\nMe: ",
 										"\n-> Estas não são as únicas informações que eu posso disponibilizar! Existem muitas mais!\nMe: ");
 my $pid = open3(\*WRITE, \*READ,0,"analyze -f /usr/local/share/freeling/config/pt.cfg --flush");
-select (undef, undef, undef, 4);
 
 
 #Guardar as regras.
@@ -47,7 +46,7 @@ for my $key(keys %rulesAux){
 	}
 	my @output;
 	print WRITE "$key\n";
-	select(undef, undef, undef, 0.5);
+	
 	while(my $read = <READ>){
 		#Se for igual, é 0
 		if(!($read eq "\n")){
@@ -91,7 +90,6 @@ while(<STDIN>){
 	}
 	my @output; 
 	print WRITE "$_\n";
-	select(undef, undef, undef, 0.5);
 	while(my $read = <READ>){
 		#Se for igual, é 0
 		if(!($read eq "\n")){
@@ -147,9 +145,9 @@ while(<STDIN>){
 		if($arrayQuest{$counter} =~ /([Ii]nformação|[Qq]uem|[Bb]iografia)/){
 			$indice = $counter;
 			#Palavra chave : Quem é
-			if($arrayQuest{$indice} =~ /quem/){
+			if($arrayQuest{$indice} =~ /[Qq]uem/){
 				for my $key(keys %arrayQuest){
-					if($arrayQuest{$key} =~ /ser/ & $key > $indice){
+					if($arrayQuest{$key} =~ /[Ss]er/ & $key > $indice){
 						$indice = $key;
 						while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/) & $indice != scalar keys %arrayQuest){}
 						if($indice != (scalar keys %arrayQuest)){
@@ -251,7 +249,7 @@ sub regras{
 				my $c1 = $counterQ-1;
 				my $c2 = $counterQ-2;
 				#Se alguma das 2 palavras anteriores for igual na regra e na pergunta
-				$valorCompAux+=2 if($arrayI{$counterR-1} =~ /($c1|$c2)/ || $arrayI{$counterR-2} =~ /($c1|$c2)/);
+				$valorCompAux+=1 if($arrayI{$counterR-1} =~ /($c1|$c2)/ || $arrayI{$counterR-2} =~ /($c1|$c2)/);
 				$valorCompAux+=1;
 			}
 			#Proxima palavra
@@ -263,13 +261,13 @@ sub regras{
 			#Guarda o valor de comparação, a resposta e o número de palavras da rule
 			$valorComp = $valorCompAux;
 			$answer = $rules->{$keyOri};
-			$nPal = (scalar keys %arrayRule) -1;
+			$nPal = (scalar keys %arrayRule);
 		}
 		#Se tiver os mesmos pontos de comparação, é escolhido
 		#O texto que tiver menos palavras.
 		if($valorCompAux == $valorComp){
 			#Se a rule tiver menos palavra que a antiga
-			if((scalar keys %arrayRule) - 1 < $nPal){
+			if((scalar keys %arrayRule) < $nPal){
 				#Guarda o valor de comparação, a resposta e o número de palavras da rule
 				$valorComp = $valorCompAux;
 				$answer = $rules->{$keyOri};
@@ -280,7 +278,7 @@ sub regras{
 	my $line;
 	my $val;
 	if($nPal != 0){
-		$val = ($nPal + ($nPal-1)*2)*0.3;
+		$val = ($nPal + ($nPal-1))*0.3;
 	}
 	else{
 		$val = 0;
