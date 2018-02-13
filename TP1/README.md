@@ -4,4 +4,4 @@ Este projeto, dado um texto, apanha as personagens e as suas conexões, demonstr
 Poderá executar com :  
 perl perRelation.pl [livro]
 
-![alt text](https://github.com/Oluap18/SPLN/tree/master/TP1/grafo.png)
+![alt text](https://github.com/Oluap18/SPLN/blob/master/TP1/grafo.png)
