@@ -77,6 +77,10 @@ print "--> Olá, queres conversar comigo?\nMe: ";
 
 #Proceder à comparação de perguntas, às regras.
 while(<STDIN>){
+	if($_ eq "Adeus" || $_ eq "adeus"){
+		print "--> Ok, espero que tenhas gostado de mim.\n";
+		last;
+	}
 	$resposta = 0;
 	my $string;
 	my $aux = $_;
@@ -127,7 +131,7 @@ while(<STDIN>){
 			}
 		}
 		#Meteorologia
-		if($arrayQuest{$counter} =~ /([Tt]empo|[Mm]eteorologia|[Tt]emperatura|[Tt]emperaturas|[Mm]eteorológico|[Mm]eteorologia)/){
+		if($arrayQuest{$counter} =~ /([Tt]empo|[Mm]eteorologia|[Tt]emperatura|[Tt]emperaturas|[Mm]eteorológico)/){
 			$indice = $counter;
 			while(!($arrayQuest{++$indice} =~ /[A-ZÁÀÃÉÊÚÍÓÕÇ].*/) & $indice != scalar keys %arrayQuest){}
 			if($indice != (scalar keys %arrayQuest)){

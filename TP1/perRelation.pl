@@ -7,7 +7,7 @@ use utf8::all;
 
 
 my $graph = Graph::Easy->new();													#inicia grafo
-my $i=25;																		#Número de relações
+my $i=0;																		#Número de relações
 my %sortedHash;																	#Armazena as relações antes de ser representadas no grafo
 my $union;																		#forma key para hash no formato "NP1-NP2"
 my $pessoa;																		#guarda qualquer occorência de nome proprio entre o primeiro e último nome próprio da regex
@@ -23,6 +23,10 @@ my $np = qr{$Pre? $PM ($s $PM|$s $de $s $PM)*}x;								#nome proprio completo
 my $pal = qr{[\wáàãéêúíóç]+};													#palavra
 my $all = qr{.*};																#Maior match de qualquer coisa
 my $allP = qr{.*?};																#Menos match de qualquer coisa
+
+print "Quantas personagens deseja verificar as suas relações?\n";
+$i = <STDIN>;
+
 
 while(<>){
 	#Tratamento dos nomes próprios válidos
@@ -78,8 +82,10 @@ for (sort{$sortedHash{$b} <=> $sortedHash{$a}} keys %sortedHash){				#ordena de 
 	if ($i eq 0) {last;}
 }
 
+open(my $fh, '>', 'result.html');
 
-print $graph->as_html_file( );
+print $fh $graph->as_html_file( );
+close $fh;
 
 #verifica se o tuplo de Nomes proprios que se relacionam já apareceram anteriormente
 sub verifica {
